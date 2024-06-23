@@ -1,4 +1,4 @@
-#define _CRT_SECURE_NO_WARNINGS  // º¸¾È °æ°í ºñÈ°¼ºÈ­ (C Ç¥ÁØ ¶óÀÌºê·¯¸® ÇÔ¼ö »ç¿ë ½Ã)
+#define _CRT_SECURE_NO_WARNINGS  // ë³´ì•ˆ ê²½ê³  ë¹„í™œì„±í™” (C í‘œì¤€ ë¼ì´ë¸ŒëŸ¬ë¦¬ í•¨ìˆ˜ ì‚¬ìš© ì‹œ)
 #include <stdio.h>
 #include <stdlib.h>
 #include <Windows.h>
@@ -6,9 +6,9 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define MAX_LINE_LENGTH 100  // ÃÖ´ë ¹®ÀÚ¿­ ±æÀÌ Á¤ÀÇ
+#define MAX_LINE_LENGTH 100  // ìµœëŒ€ ë¬¸ìì—´ ê¸¸ì´ ì •ì˜
 
-// Å° Á¤ÀÇ
+// í‚¤ ì •ì˜
 typedef int Key;
 enum Key_ {
     Key_none = 0,
@@ -19,30 +19,30 @@ enum Key_ {
     Key_enter = 13,
 };
 
-// ¸Ş´º Ç×¸ñ ±¸Á¶Ã¼
+// ë©”ë‰´ í•­ëª© êµ¬ì¡°ì²´
 typedef struct MenuItem {
-    int code;                       //¸Ş´º Ç×¸ñ ÄÚµå
-    char name[MAX_LINE_LENGTH];     //¸Ş´º Ç×¸ñ ÀÌ¸§
-    int price;                      //¸Ş´º Ç×¸ñ °¡°İ
-    struct MenuItem* next;          //´ÙÀ½ ¸Ş´º Ç×¸ñÀ» °¡¸®Å°´Â Æ÷ÀÎÅÍ
+    int code;                       //ë©”ë‰´ í•­ëª© ì½”ë“œ
+    char name[MAX_LINE_LENGTH];     //ë©”ë‰´ í•­ëª© ì´ë¦„
+    int price;                      //ë©”ë‰´ í•­ëª© ê°€ê²©
+    struct MenuItem* next;          //ë‹¤ìŒ ë©”ë‰´ í•­ëª©ì„ ê°€ë¦¬í‚¤ëŠ” í¬ì¸í„°
 } MenuItem;
 
-// ÁÖ¹® Ç×¸ñ ±¸Á¶Ã¼
+// ì£¼ë¬¸ í•­ëª© êµ¬ì¡°ì²´
 typedef struct Order {
     MenuItem* menuItem;
     struct Order* next;
 } Order;
 
-// »ö»ó Å¸ÀÔ ¿­°ÅÇü
+// ìƒ‰ìƒ íƒ€ì… ì—´ê±°í˜•
 enum ColorType {
     BLACK, darkBLUE, DarkGreen, darkSkyBlue, DarkRed, DarkPurple, DarkYellow,
     GRAY, DarkGray, BLUE, GREEN, SkyBlue, RED, PURPLE, YELLOW, WHITE
 } COLOR;
 
-// Ä¿¼­ Å¸ÀÔ ¿­°ÅÇü
+// ì»¤ì„œ íƒ€ì… ì—´ê±°í˜•
 typedef enum { NOCURSOR, SOLIDCURSOR, NORMALCURSOR } CURSOR_TYPE;
 
-// Ä¿¼­ ¼³Á¤ ÇÔ¼ö
+// ì»¤ì„œ ì„¤ì • í•¨ìˆ˜
 void setcursortype(CURSOR_TYPE c) {
     CONSOLE_CURSOR_INFO CurInfo;
     switch (c) {
@@ -62,7 +62,7 @@ void setcursortype(CURSOR_TYPE c) {
     SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &CurInfo);
 }
 
-// ÄÜ¼Ö Ä¿¼­ À§Ä¡ ¼³Á¤ ÇÔ¼ö
+// ì½˜ì†” ì»¤ì„œ ìœ„ì¹˜ ì„¤ì • í•¨ìˆ˜
 bool gotoxy(int x, int y) {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     COORD pos = { x, y };
@@ -70,7 +70,7 @@ bool gotoxy(int x, int y) {
     return true;
 }
 
-// ÅØ½ºÆ® ¼±ÅÃ ÇÔ¼ö
+// í…ìŠ¤íŠ¸ ì„ íƒ í•¨ìˆ˜
 void Text_select(const char* _Format, bool selected, int x, int y) {
     if (gotoxy(x, y)) {
         if (selected) SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), (WHITE << 4) + BLACK);
@@ -79,15 +79,15 @@ void Text_select(const char* _Format, bool selected, int x, int y) {
     }
 }
 
-// ¸Ş´º Ç×¸ñ Ãß°¡ ÇÔ¼ö
+// ë©”ë‰´ í•­ëª© ì¶”ê°€ í•¨ìˆ˜
 MenuItem* addMenuItem(MenuItem* head, int code, const char* name, int price) {
-    MenuItem* newItem = (MenuItem*)malloc(sizeof(MenuItem));    //»õ ¸Ş´º Ç×¸ñÀ» À§ÇÑ ¸Ş¸ğ¸® ÇÒ´ç
-    newItem->code = code;                                       //»õ Ç×¸ñÀÇ ÀÌ¸§ ¼³Á¤
-    strcpy(newItem->name, name);                                //»õ Ç×¸ñÀÇ °¡°İ ¼³Á¤
-    newItem->price = price;                                     //»õ Ç×¸ñÀÇ °¡°İ ¼³Á¤
-    newItem->next = NULL;                                       //»õ Ç×¸ñÀÇ ´ÙÀ½ Ç×¸ñ Æ÷ÀÎÅÍ¸¦ NULL·Î ÃÊ±âÈ­
+    MenuItem* newItem = (MenuItem*)malloc(sizeof(MenuItem));    //ìƒˆ ë©”ë‰´ í•­ëª©ì„ ìœ„í•œ ë©”ëª¨ë¦¬ í• ë‹¹
+    newItem->code = code;                                       //ìƒˆ í•­ëª©ì˜ ì´ë¦„ ì„¤ì •
+    strcpy(newItem->name, name);                                //ìƒˆ í•­ëª©ì˜ ê°€ê²© ì„¤ì •
+    newItem->price = price;                                     //ìƒˆ í•­ëª©ì˜ ê°€ê²© ì„¤ì •
+    newItem->next = NULL;                                       //ìƒˆ í•­ëª©ì˜ ë‹¤ìŒ í•­ëª© í¬ì¸í„°ë¥¼ NULLë¡œ ì´ˆê¸°í™”
 
-    //¿¬°á ¸®½ºÆ®ÀÇ Á¤·ÄµÈ À§Ä¡¿¡ »õ Ç×¸ñ »ğÀÔ
+    //ì—°ê²° ë¦¬ìŠ¤íŠ¸ì˜ ì •ë ¬ëœ ìœ„ì¹˜ì— ìƒˆ í•­ëª© ì‚½ì…
     if (head == NULL || head->code > newItem->code) {
         newItem->next = head;
         return newItem;
@@ -103,7 +103,7 @@ MenuItem* addMenuItem(MenuItem* head, int code, const char* name, int price) {
     return head;
 }
 
-// Å° ÀÔ·Â ÇÔ¼ö
+// í‚¤ ì…ë ¥ í•¨ìˆ˜
 Key input_key() {
     Key key = Key_none;
     char ch = _getch();
@@ -121,61 +121,61 @@ Key input_key() {
     return key;
 }
 
-// ¸Ş´º ÆÄÀÏ ·Îµå ÇÔ¼ö
+// ë©”ë‰´ íŒŒì¼ ë¡œë“œ í•¨ìˆ˜
 MenuItem* loadMenu(const char* filename, MenuItem* sections[]) {
-    FILE* file = fopen(filename, "r"); //ÆÄÀÏÀ» ÀĞ±â ¸ğµå·Î ¿­±â
+    FILE* file = fopen(filename, "r"); //íŒŒì¼ì„ ì½ê¸° ëª¨ë“œë¡œ ì—´ê¸°
     if (!file) {
-        perror("ÆÄÀÏÀ» ¿­ ¼ö ¾ø½À´Ï´Ù.");
+        perror("íŒŒì¼ì„ ì—´ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
         exit(EXIT_FAILURE);
     }
 
     char line[MAX_LINE_LENGTH];
     int section = 0;
 
-    // ÆÄÀÏÀ» ÇÑ ÁÙ¾¿ ÀĞ¾î¿Í¼­ °¢ ¼½¼Ç¿¡ ¸Â°Ô ¸Ş´º Ç×¸ñÀ» Ãß°¡
+    // íŒŒì¼ì„ í•œ ì¤„ì”© ì½ì–´ì™€ì„œ ê° ì„¹ì…˜ì— ë§ê²Œ ë©”ë‰´ í•­ëª©ì„ ì¶”ê°€
     while (fgets(line, sizeof(line), file)) {
-        if (strstr(line, "1. ¸Ş´º")) {
+        if (strstr(line, "1. ë©”ë‰´")) {
             section = 1;
             continue;
         }
-        else if (strstr(line, "2. »§ ±æÀÌ ¼±ÅÃ")) {
+        else if (strstr(line, "2. ë¹µ ê¸¸ì´ ì„ íƒ")) {
             section = 2;
             continue;
         }
-        else if (strstr(line, "3. »§ Á¾·ù ¼±ÅÃ")) {
+        else if (strstr(line, "3. ë¹µ ì¢…ë¥˜ ì„ íƒ")) {
             section = 3;
             continue;
         }
-        else if (strstr(line, "4. Ä¡Áî Á¾·ù ¼±ÅÃ")) {
+        else if (strstr(line, "4. ì¹˜ì¦ˆ ì¢…ë¥˜ ì„ íƒ")) {
             section = 4;
             continue;
         }
-        else if (strstr(line, "5. Àç·á Ãß°¡")) {
+        else if (strstr(line, "5. ì¬ë£Œ ì¶”ê°€")) {
             section = 5;
             continue;
         }
-        else if (strstr(line, "6. »§ ±Á±â À¯¹«")) {
+        else if (strstr(line, "6. ë¹µ êµ½ê¸° ìœ ë¬´")) {
             section = 6;
             continue;
         }
-        else if (strstr(line, "7. ¾ßÃ¤ ¼±ÅÃ")) {
+        else if (strstr(line, "7. ì•¼ì±„ ì„ íƒ")) {
             section = 7;
             continue;
         }
-        else if (strstr(line, "8. ¼Ò½º ¼±ÅÃ")) {
+        else if (strstr(line, "8. ì†ŒìŠ¤ ì„ íƒ")) {
             section = 8;
             continue;
         }
-        else if (strstr(line, "9. ¼¼Æ® À¯¹«")) {
+        else if (strstr(line, "9. ì„¸íŠ¸ ìœ ë¬´")) {
             section = 9;
             continue;
         }
 
-        // ¸Ş´º Ç×¸ñÀ» ÆÄ½ÌÇÏ¿© °¢ ¼½¼Ç¿¡ Ãß°¡
+        // ë©”ë‰´ í•­ëª©ì„ íŒŒì‹±í•˜ì—¬ ê° ì„¹ì…˜ì— ì¶”ê°€
         char name[MAX_LINE_LENGTH];
         int code, price;
-        price = 0;  // °¡°İÀÌ ¾ø´Â °æ¿ì¸¦ À§ÇÑ ÃÊ±âÈ­
-        if (sscanf(line, "%d\t%[^\t\n]%d¿ø", &code, name, &price) == 3 || sscanf(line, "%d\t%[^\t\n]", &code, name) == 2) {
+        price = 0;  // ê°€ê²©ì´ ì—†ëŠ” ê²½ìš°ë¥¼ ìœ„í•œ ì´ˆê¸°í™”
+        if (sscanf(line, "%d\t%[^\t\n]%dì›", &code, name, &price) == 3 || sscanf(line, "%d\t%[^\t\n]", &code, name) == 2) {
             if (section >= 1 && section <= 10) {
                 sections[section - 1] = addMenuItem(sections[section - 1], code, name, price);
             }
@@ -186,16 +186,16 @@ MenuItem* loadMenu(const char* filename, MenuItem* sections[]) {
     return NULL;
 }
 
-// ¼½¼Ç ¸Ş´º Ãâ·Â ÇÔ¼ö
+// ì„¹ì…˜ ë©”ë‰´ ì¶œë ¥ í•¨ìˆ˜
 void printSectionMenu(MenuItem* head, const char* title) {
     printf("\n%s\n", title);
     while (head) {
-        printf("%d: %s (°¡°İ: %d¿ø)\n", head->code, head->name, head->price);
+        printf("%d: %s (ê°€ê²©: %dì›)\n", head->code, head->name, head->price);
         head = head->next;
     }
 }
 
-// ¸Ş´º Ç×¸ñ °Ë»ö ÇÔ¼ö
+// ë©”ë‰´ í•­ëª© ê²€ìƒ‰ í•¨ìˆ˜
 MenuItem* findMenuItem(MenuItem* head, int code) {
     while (head) {
         if (head->code == code) {
@@ -206,11 +206,11 @@ MenuItem* findMenuItem(MenuItem* head, int code) {
     return NULL;
 }
 
-// ÁÖ¹® Ç×¸ñ Ãß°¡ ÇÔ¼ö
+// ì£¼ë¬¸ í•­ëª© ì¶”ê°€ í•¨ìˆ˜
 Order* addOrderItem(Order* head, MenuItem* menuItem) {
-    Order* newOrder = (Order*)malloc(sizeof(Order));    //»õ ÁÖ¹® Ç×¸ñÀ» À§ÇÑ ¸Ş¸ğ¸® ÇÒ´ç
-    newOrder->menuItem = menuItem;                      //»õ Ç×¸ñÀÇ ¸Ş´º Ç×¸ñ Æ÷ÀÎÅÍ ¼³Á¤
-    newOrder->next = NULL;                              //»õ Ç×¸ñÀÇ ´ÙÀ½ Ç×¸ñ Æ÷ÀÎÅÍ¸¦ NULL·Î ÃÊ±âÈ­
+    Order* newOrder = (Order*)malloc(sizeof(Order));    //ìƒˆ ì£¼ë¬¸ í•­ëª©ì„ ìœ„í•œ ë©”ëª¨ë¦¬ í• ë‹¹
+    newOrder->menuItem = menuItem;                      //ìƒˆ í•­ëª©ì˜ ë©”ë‰´ í•­ëª© í¬ì¸í„° ì„¤ì •
+    newOrder->next = NULL;                              //ìƒˆ í•­ëª©ì˜ ë‹¤ìŒ í•­ëª© í¬ì¸í„°ë¥¼ NULLë¡œ ì´ˆê¸°í™”
 
     if (head == NULL) {
         return newOrder;
@@ -224,7 +224,7 @@ Order* addOrderItem(Order* head, MenuItem* menuItem) {
     return head;
 }
 
-// ÁÖ¹® Ç×¸ñ Á¦°Å ÇÔ¼ö
+// ì£¼ë¬¸ í•­ëª© ì œê±° í•¨ìˆ˜
 Order* removeOrderItem(Order* head, MenuItem* menuItem) {
     if (head == NULL) return NULL;
 
@@ -249,13 +249,13 @@ Order* removeOrderItem(Order* head, MenuItem* menuItem) {
     return head;
 }
 
-// ÃÑ °¡°İ °è»ê ÇÔ¼ö
+// ì´ ê°€ê²© ê³„ì‚° í•¨ìˆ˜
 int calculateTotalPrice(Order* order, MenuItem* menuSection) {
     int total = 0;
     bool is30cmSelected = false;
-    bool isMultiplierApplied = false; // Áßº¹ ¹æÁö¸¦ À§ÇÑ ÇÃ·¡±×
+    bool isMultiplierApplied = false; // ì¤‘ë³µ ë°©ì§€ë¥¼ ìœ„í•œ í”Œë˜ê·¸
 
-    // "30cm" ¼±ÅÃ ¿©ºÎ È®ÀÎ
+    // "30cm" ì„ íƒ ì—¬ë¶€ í™•ì¸
     Order* tempOrder = order;
     while (tempOrder) {
         if (strcmp(tempOrder->menuItem->name, "30cm") == 0) {
@@ -265,17 +265,17 @@ int calculateTotalPrice(Order* order, MenuItem* menuSection) {
         tempOrder = tempOrder->next;
     }
 
-    // °¡°İ °è»ê
+    // ê°€ê²© ê³„ì‚°
     while (order) {
         int price = order->menuItem->price;
 
-        // '1. ¸Ş´º' ¼½¼ÇÀÇ Ç×¸ñÀÎÁö È®ÀÎ ¹× µÎ ¹è·Î Áõ°¡ ¿©ºÎ È®ÀÎ
+        // '1. ë©”ë‰´' ì„¹ì…˜ì˜ í•­ëª©ì¸ì§€ í™•ì¸ ë° ë‘ ë°°ë¡œ ì¦ê°€ ì—¬ë¶€ í™•ì¸
         if (is30cmSelected && !isMultiplierApplied) {
             MenuItem* currentItem = menuSection;
             while (currentItem) {
                 if (currentItem->code == order->menuItem->code) {
                     price *= 2;
-                    isMultiplierApplied = true; // ÇÑ ¹ø¸¸ µÎ ¹è·Î Áõ°¡ÇÏµµ·Ï ÇÃ·¡±× ¼³Á¤
+                    isMultiplierApplied = true; // í•œ ë²ˆë§Œ ë‘ ë°°ë¡œ ì¦ê°€í•˜ë„ë¡ í”Œë˜ê·¸ ì„¤ì •
                     break;
                 }
                 currentItem = currentItem->next;
@@ -291,24 +291,24 @@ int calculateTotalPrice(Order* order, MenuItem* menuSection) {
 
 
 
-// ÁÖ¹® ³»¿ª Ãâ·Â ÇÔ¼ö
+// ì£¼ë¬¸ ë‚´ì—­ ì¶œë ¥ í•¨ìˆ˜
 void printOrder(Order* order, MenuItem* menuSection) {
     gotoxy(36, 0);
-    printf("|   ====== ÁÖ¹® ³»¿ª ======\n");
+    printf("|   ====== ì£¼ë¬¸ ë‚´ì—­ ======\n");
     Order* headOrder = order;
     int y = 0;
     while (order) {
         gotoxy(36, ++y);
-        printf("|    - %s (ÄÚµå: %d, °¡°İ: %d¿ø)\n", order->menuItem->name, order->menuItem->code, order->menuItem->price);
+        printf("|    - %s (ì½”ë“œ: %d, ê°€ê²©: %dì›)\n", order->menuItem->name, order->menuItem->code, order->menuItem->price);
         order = order->next;
     }
     int totalPrice = calculateTotalPrice(headOrder, menuSection);
 
     gotoxy(36, ++y);
-    printf("|   ============ ÃÑ ±İ¾× : % d¿ø\n", totalPrice);
+    printf("|   ============ ì´ ê¸ˆì•¡ : % dì›\n", totalPrice);
 }
 
-// ÁÖ¹® Ç×¸ñ ¸Ş¸ğ¸® ÇØÁ¦ ÇÔ¼ö
+// ì£¼ë¬¸ í•­ëª© ë©”ëª¨ë¦¬ í•´ì œ í•¨ìˆ˜
 void freeOrders(Order* order) {
     while (order) {
         Order* temp = order;
@@ -317,67 +317,67 @@ void freeOrders(Order* order) {
     }
 }
 
-// ¸Ş´º È­¸é Ç¥½Ã ÇÔ¼ö ¼±¾ğ
+// ë©”ë‰´ í™”ë©´ í‘œì‹œ í•¨ìˆ˜ ì„ ì–¸
 void showMenu(MenuItem* sections[], const char* sectionTitles[], int sectionCount, Order** order);
 void showModifyMenu(Order** order);
 
-// ½ÃÀÛ È­¸é Ç¥½Ã ÇÔ¼ö
+// ì‹œì‘ í™”ë©´ í‘œì‹œ í•¨ìˆ˜
 void showEntrance(MenuItem* sections[], const char* sectionTitles[], int sectionCount, Order** order) {
     int itemIndex = 0;
     Key key;
 
     while (1) {
         system("cls");
-        Text_select("¼­ºê¿şÀÌ Å°¿À½ºÅ©", false, 0, 0);      //Á¦¸ñ ÅØ½ºÆ® Ãâ·Â
-        Text_select("1. ÁÖ¹®ÇÏ±â", itemIndex == 0, 0, 1);   //¸Ş´º Ç×¸ñ ¼±ÅÃ½Ã ÇØ´ç ÅØ½ºÆ® Ãâ·Â
-        Text_select("2. Á¾·áÇÏ±â", itemIndex == 1, 0, 2);   //¸Ş´º Ç×¸ñ ¼±ÅÃ½Ã ÇØ´ç ÅØ½ºÆ® Ãâ·Â
+        Text_select("ì„œë¸Œì›¨ì´ í‚¤ì˜¤ìŠ¤í¬", false, 0, 0);      //ì œëª© í…ìŠ¤íŠ¸ ì¶œë ¥
+        Text_select("1. ì£¼ë¬¸í•˜ê¸°", itemIndex == 0, 0, 1);   //ë©”ë‰´ í•­ëª© ì„ íƒì‹œ í•´ë‹¹ í…ìŠ¤íŠ¸ ì¶œë ¥
+        Text_select("2. ì¢…ë£Œí•˜ê¸°", itemIndex == 1, 0, 2);   //ë©”ë‰´ í•­ëª© ì„ íƒì‹œ í•´ë‹¹ í…ìŠ¤íŠ¸ ì¶œë ¥
 
-        key = input_key();                                  //Å° ÀÔ·Â¹Ş±â
+        key = input_key();                                  //í‚¤ ì…ë ¥ë°›ê¸°
         if (key == Key_up) {
-            itemIndex = (itemIndex - 1 + 2) % 2;            //À§ ¹æÇâÅ° ÀÔ·Â ½Ã ÀÎµ¦½º º¯°æ
+            itemIndex = (itemIndex - 1 + 2) % 2;            //ìœ„ ë°©í–¥í‚¤ ì…ë ¥ ì‹œ ì¸ë±ìŠ¤ ë³€ê²½
         }
-        else if (key == Key_down) {                         //¾Æ·¡ ¹æÇâÅ° ÀÔ·Â ½Ã ÀÎµ¦½º º¯°æ
+        else if (key == Key_down) {                         //ì•„ë˜ ë°©í–¥í‚¤ ì…ë ¥ ì‹œ ì¸ë±ìŠ¤ ë³€ê²½
             itemIndex = (itemIndex + 1) % 2;
         }
         else if (key == Key_enter) {
             if (itemIndex == 0) {
-                showMenu(sections, sectionTitles, sectionCount, order);     //ÁÖ¹®ÇÏ±â ¼±ÅÃ ½Ã ¸Ş´º È­¸é Ç¥½Ã
+                showMenu(sections, sectionTitles, sectionCount, order);     //ì£¼ë¬¸í•˜ê¸° ì„ íƒ ì‹œ ë©”ë‰´ í™”ë©´ í‘œì‹œ
                 return;
             }
             else if (itemIndex == 1) {
-                exit(0);                                    //Á¾·áÇÏ±â ¼±ÅÃ ½Ã ÇÁ·Î±×·¥ Á¾·á 
+                exit(0);                                    //ì¢…ë£Œí•˜ê¸° ì„ íƒ ì‹œ í”„ë¡œê·¸ë¨ ì¢…ë£Œ 
             }
         }
     }
 }
 
-// ¸Ş´º ¼±ÅÃ È­¸é Ç¥½Ã ÇÔ¼ö
+// ë©”ë‰´ ì„ íƒ í™”ë©´ í‘œì‹œ í•¨ìˆ˜
 void showMenu(MenuItem* sections[], const char* sectionTitles[], int sectionCount, Order** order) {
     int sectionIndex = 0;
     Key key;
 
     while (1) {
-        system("cls");                                                  //È­¸é Áö¿ì±â
+        system("cls");                                                  //í™”ë©´ ì§€ìš°ê¸°
         for (int i = 0; i < sectionCount; ++i) {
             Text_select(sectionTitles[i], i == sectionIndex, 0, i);
         }
-        printOrder(*order, sections[0]);                                //ÁÖ¹® ³»¿ª Ãâ·Â
+        printOrder(*order, sections[0]);                                //ì£¼ë¬¸ ë‚´ì—­ ì¶œë ¥
 
-        key = input_key();                                              //Å° ÀÔ·Â ¹Ş±â
+        key = input_key();                                              //í‚¤ ì…ë ¥ ë°›ê¸°
         if (key == Key_up) {
-            sectionIndex = (sectionIndex - 1 + sectionCount) % sectionCount;    // À§ ¹æÇâÅ° ÀÔ·Â ½Ã ¼½¼Ç ÀÎµ¦½º º¯°æ
+            sectionIndex = (sectionIndex - 1 + sectionCount) % sectionCount;    // ìœ„ ë°©í–¥í‚¤ ì…ë ¥ ì‹œ ì„¹ì…˜ ì¸ë±ìŠ¤ ë³€ê²½
         }
         else if (key == Key_down) {
-            sectionIndex = (sectionIndex + 1) % sectionCount;                   //¾Æ·¡ ¹æÇâÅ° ÀÔ·Â½Ã ¼½¼Ç ÀÎµ¦½º º¯°æ
+            sectionIndex = (sectionIndex + 1) % sectionCount;                   //ì•„ë˜ ë°©í–¥í‚¤ ì…ë ¥ì‹œ ì„¹ì…˜ ì¸ë±ìŠ¤ ë³€ê²½
         }
         else if (key == Key_enter) {
             if (sectionIndex == sectionCount - 1) {
-                showModifyMenu(order);                                          //¼öÁ¤ÇÏ±â ¼±ÅÃ ½Ã ÁÖ¹® ¼öÁ¤ È­¸é Ç¥½Ã
+                showModifyMenu(order);                                          //ìˆ˜ì •í•˜ê¸° ì„ íƒ ì‹œ ì£¼ë¬¸ ìˆ˜ì • í™”ë©´ í‘œì‹œ
             }
             else if (sectionIndex == sectionCount - 2) {
-                system("cls");                                                  //È­¸é Áö¿ì±â
-                printOrder(*order, sections[0]);                                //ÁÖ¹® ³»¿ª Ãâ·Â
-                printf("\nÁÖ¹®ÀÌ ¿Ï·áµÇ¾ú½À´Ï´Ù. °¨»çÇÕ´Ï´Ù!\n");               //ÁÖ¹® ¿Ï·á ¸Ş½ÃÁö Ãâ·Â
+                system("cls");                                                  //í™”ë©´ ì§€ìš°ê¸°
+                printOrder(*order, sections[0]);                                //ì£¼ë¬¸ ë‚´ì—­ ì¶œë ¥
+                printf("\nì£¼ë¬¸ì´ ì™„ë£Œë˜ì—ˆìŠµë‹ˆë‹¤. ê°ì‚¬í•©ë‹ˆë‹¤!\n");               //ì£¼ë¬¸ ì™„ë£Œ ë©”ì‹œì§€ ì¶œë ¥
 
                 freeOrders(*order);
                 *order = NULL;
@@ -392,9 +392,9 @@ void showMenu(MenuItem* sections[], const char* sectionTitles[], int sectionCoun
     MenuItem* currentItem = currentSection;
     int itemIndex = 0;
 
-    while (1) {                                                                 //È­¸é Áö¿ì±â
+    while (1) {                                                                 //í™”ë©´ ì§€ìš°ê¸°
         system("cls");
-        printf("%s\n", sectionTitles[sectionIndex]);                            //¼½¼Ç Å¸ÀÌÆ² Ãâ·Â
+        printf("%s\n", sectionTitles[sectionIndex]);                            //ì„¹ì…˜ íƒ€ì´í‹€ ì¶œë ¥
         int i = 0;
         for (MenuItem* item = currentSection; item != NULL; item = item->next, ++i) {
             if (gotoxy(0, i + 1)) {
@@ -408,25 +408,25 @@ void showMenu(MenuItem* sections[], const char* sectionTitles[], int sectionCoun
                         ++count;
                     }
                     gotoxy(32 - count, i + 1);
-                    printf("%d¿ø", item->price);
+                    printf("%dì›", item->price);
                 }
                 if (i == itemIndex) SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), (BLACK << 4) + WHITE);
             }
         }
-        Text_select("[µÚ·Î°¡±â]", i == itemIndex, 0, i + 1);                    //µÚ·Î°¡±â ¿É¼Ç Ãâ·Â
+        Text_select("[ë’¤ë¡œê°€ê¸°]", i == itemIndex, 0, i + 1);                    //ë’¤ë¡œê°€ê¸° ì˜µì…˜ ì¶œë ¥
 
-        printOrder(*order, sections[0]);                                        //ÁÖ¹® ³»¿ª Ãâ·Â
+        printOrder(*order, sections[0]);                                        //ì£¼ë¬¸ ë‚´ì—­ ì¶œë ¥
 
-        key = input_key();                                                      //Å° ÀÔ·Â ¹Ş±â
+        key = input_key();                                                      //í‚¤ ì…ë ¥ ë°›ê¸°
         if (key == Key_up) {
-            itemIndex = (itemIndex - 1 + i + 1) % (i + 1);                      //À§ ¹æÇâÅ° ÀÔ·Â ½Ã Ç×¸ñ ÀÎµ¦½º º¯°æ
+            itemIndex = (itemIndex - 1 + i + 1) % (i + 1);                      //ìœ„ ë°©í–¥í‚¤ ì…ë ¥ ì‹œ í•­ëª© ì¸ë±ìŠ¤ ë³€ê²½
         }
         else if (key == Key_down) {
-            itemIndex = (itemIndex + 1) % (i + 1);                              //¾Æ·¡ ¹æÇâÅ° ÀÔ·Â ½Ã Ç×¸ñ ÀÎµ¦½º º¯°æ
+            itemIndex = (itemIndex + 1) % (i + 1);                              //ì•„ë˜ ë°©í–¥í‚¤ ì…ë ¥ ì‹œ í•­ëª© ì¸ë±ìŠ¤ ë³€ê²½
         }
         else if (key == Key_enter) {
             if (itemIndex == i) {
-                showMenu(sections, sectionTitles, sectionCount, order);         //µÚ·Î °¡±â ¼±ÅÃ½Ã ¸Ş´º È­¸é Ç¥½Ã
+                showMenu(sections, sectionTitles, sectionCount, order);         //ë’¤ë¡œ ê°€ê¸° ì„ íƒì‹œ ë©”ë‰´ í™”ë©´ í‘œì‹œ
                 return;
             }
             break;
@@ -438,33 +438,33 @@ void showMenu(MenuItem* sections[], const char* sectionTitles[], int sectionCoun
         currentItem = currentItem->next;
     }
 
-    *order = addOrderItem(*order, currentItem);                                 //ÁÖ¹® Ç×¸ñ Ãß°¡
+    *order = addOrderItem(*order, currentItem);                                 //ì£¼ë¬¸ í•­ëª© ì¶”ê°€
 
     gotoxy(0, 0);
     showMenu(sections, sectionTitles, sectionCount, order);
 }
 
 
-// ÁÖ¹® ¼öÁ¤ È­¸é Ç¥½Ã ÇÔ¼ö
+// ì£¼ë¬¸ ìˆ˜ì • í™”ë©´ í‘œì‹œ í•¨ìˆ˜
 void showModifyMenu(Order** order) {
     int itemIndex = 0;
     Key key;
 
     while (1) {
-        system("cls");                                                         //È­¸é Áö¿ì±â
-        printf("¼öÁ¤ÇÒ Ç×¸ñÀ» ¼±ÅÃÇØÁÖ¼¼¿ä:\n");
+        system("cls");                                                         //í™”ë©´ ì§€ìš°ê¸°
+        printf("ìˆ˜ì •í•  í•­ëª©ì„ ì„ íƒí•´ì£¼ì„¸ìš”:\n");
         int i = 0;
         for (Order* ord = *order; ord != NULL; ord = ord->next, ++i) {
             Text_select(ord->menuItem->name, i == itemIndex, 0, i + 1);
         }
-        Text_select("[µÚ·Î°¡±â]", i == itemIndex, 0, i + 1);
+        Text_select("[ë’¤ë¡œê°€ê¸°]", i == itemIndex, 0, i + 1);
 
         key = input_key();
         if (key == Key_up) {
-            itemIndex = (itemIndex - 1 + i + 1) % (i + 1);                      //À§ ¹æÇâÅ° ÀÔ·Â½Ã ÀÎµ¦½º º¯°æ
+            itemIndex = (itemIndex - 1 + i + 1) % (i + 1);                      //ìœ„ ë°©í–¥í‚¤ ì…ë ¥ì‹œ ì¸ë±ìŠ¤ ë³€ê²½
         }
         else if (key == Key_down) {
-            itemIndex = (itemIndex + 1) % (i + 1);                              //¾Æ·¡ ¹æÇâÅ° ÀÔ·Â ½Ã ÀÎµ¦½º º¯°æ
+            itemIndex = (itemIndex + 1) % (i + 1);                              //ì•„ë˜ ë°©í–¥í‚¤ ì…ë ¥ ì‹œ ì¸ë±ìŠ¤ ë³€ê²½
         }
         else if (key == Key_enter) {
             if (itemIndex == i) {
@@ -475,7 +475,7 @@ void showModifyMenu(Order** order) {
                 for (int j = 0; j < itemIndex; ++j) {
                     current = current->next;
                 }
-                *order = removeOrderItem(*order, current->menuItem);            //ÁÖ¹® Ç×¸ñ Á¦°Å
+                *order = removeOrderItem(*order, current->menuItem);            //ì£¼ë¬¸ í•­ëª© ì œê±°
                 break;
             }
         }
@@ -484,30 +484,44 @@ void showModifyMenu(Order** order) {
     showModifyMenu(order);
 }
 
-// ¸ŞÀÎ ÇÔ¼ö
+void freeMenuItems(MenuItem* head) {                // ë©”ë‰´ í•­ëª© ë©”ëª¨ë¦¬ í•´ì œ í•¨ìˆ˜
+    while (head) {
+        MenuItem* temp = head;
+        head = head->next;
+        free(temp);
+    }
+}
+
+// ë©”ì¸ í•¨ìˆ˜
 int main() {
-    //ÃÊ±â ¼³Á¤ 
-    setcursortype(NOCURSOR);                // Ä¿¼­ ºñÈ°¼ºÈ­
-    MenuItem* sections[10] = { NULL };      //°¢ ¼¼¼ÇÀÇ ¸Ş´º Ç×¸ñÀ» ÀúÀåÇÒ Æ÷ÀÎÅÍ ¹è¿­
-    Order* order = NULL;                    //ÁÖ¹® Ç×¸ñÀ» ÀúÀåÇÒ Æ÷ÀÎÅÍ
+    //ì´ˆê¸° ì„¤ì • 
+    setcursortype(NOCURSOR);                // ì»¤ì„œ ë¹„í™œì„±í™”
+    MenuItem* sections[10] = { NULL };      //ê° ì„¸ì…˜ì˜ ë©”ë‰´ í•­ëª©ì„ ì €ì¥í•  í¬ì¸í„° ë°°ì—´
+    Order* order = NULL;                    //ì£¼ë¬¸ í•­ëª©ì„ ì €ì¥í•  í¬ì¸í„°
     const char* sectionTitles[] = {
-        "1. ¸Ş´º",
-        "2. »§ ±æÀÌ ¼±ÅÃ",
-        "3. »§ Á¾·ù ¼±ÅÃ",
-        "4. Ä¡Áî Á¾·ù ¼±ÅÃ",
-        "5. Àç·á Ãß°¡",
-        "6. »§ ±Á±â À¯¹«",
-        "7. ¾ßÃ¤ ¼±ÅÃ",
-        "8. ¼Ò½º ¼±ÅÃ",
-        "9. ¼¼Æ® À¯¹«",
-        "[¼±ÅÃ ¿Ï·á]",
-        "[¼öÁ¤ ÇÏ±â]"
+        "1. ë©”ë‰´",
+        "2. ë¹µ ê¸¸ì´ ì„ íƒ",
+        "3. ë¹µ ì¢…ë¥˜ ì„ íƒ",
+        "4. ì¹˜ì¦ˆ ì¢…ë¥˜ ì„ íƒ",
+        "5. ì¬ë£Œ ì¶”ê°€",
+        "6. ë¹µ êµ½ê¸° ìœ ë¬´",
+        "7. ì•¼ì±„ ì„ íƒ",
+        "8. ì†ŒìŠ¤ ì„ íƒ",
+        "9. ì„¸íŠ¸ ìœ ë¬´",
+        "[ì„ íƒ ì™„ë£Œ]",
+        "[ìˆ˜ì • í•˜ê¸°]"
     };
     int sectionCount = sizeof(sectionTitles) / sizeof(sectionTitles[0]);
 
 
-    loadMenu("Subwaydata.txt", sections);                               //¸Ş´º µ¥ÀÌÅÍ ÆÄÀÏ ·Îµå
-    showEntrance(sections, sectionTitles, sectionCount, &order);        //½ÃÀÛÈ­¸é Ç¥½Ã
+    loadMenu("Subwaydata.txt", sections);                               //ë©”ë‰´ ë°ì´í„° íŒŒì¼ ë¡œë“œ
+    showEntrance(sections, sectionTitles, sectionCount, &order);        //ì‹œì‘í™”ë©´ í‘œì‹œ
+
+    for (int i = 0; i < 10; ++i) {                                      // ë™ì  í• ë‹¹ ë©”ëª¨ë¦¬ í•´ì œ
+        freeMenuItems(sections[i]);
+    }
+    freeOrders(order);
+
 
     return 0;
 }
