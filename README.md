@@ -1,292 +1,122 @@
-# 🥪 Subway Kiosk Order System
+# 🥪 Subway 키오스크 주문 시스템 (C)
 
-서브웨이 키오스크 주문 시스템을 C 언어로 구현한 프로젝트입니다. 연결 리스트 자료구조와 Windows Console API를 활용하여 실제 키오스크와 유사한 사용자 경험을 제공합니다.
+> 충북대학교 지능로봇공학과 **오픈소스 기초 프로젝트 기말 과제** · 2024.06
 
-## 프로젝트 개요
+서브웨이 매장의 주문 순서(메뉴 → 빵 길이 → 빵 종류 → 치즈 → 추가 재료 → 굽기 → 야채 → 소스 → 세트)를 Windows 콘솔에서 방향키로 고르는 키오스크입니다.
+메뉴는 텍스트 파일에서 읽어 **구조체 + 연결 리스트**로 관리하고, 주문 내역도 연결 리스트로 추가·삭제합니다.
 
-실제 서브웨이 매장의 키오스크 주문 프로세스를 콘솔 환경에서 재현한 프로그램입니다. 메뉴 선택부터 주문 완료까지의 전 과정을 구현했습니다.
+| 항목 | 내용 |
+|---|---|
+| 언어 | C (MSVC, Visual Studio) |
+| API | Windows Console API (`SetConsoleCursorPosition`, `SetConsoleTextAttribute`), `conio.h`의 `_getch()` |
+| 자료구조 | 구조체, 단일 연결 리스트, 포인터 배열 |
 
-### 주요 기능
+---
 
-- **메뉴 시스템**
-  - 섹션별 메뉴 분류 (빵, 메인, 치즈, 야채, 소스 등)
-  - 계층적 메뉴 네비게이션
-  - 메뉴 코드 및 가격 관리
+## 화면 흐름
 
-- **주문 관리**
-  - 실시간 주문 내역 표시
-  - 메뉴 추가/제거
-  - 총 금액 자동 계산
+```
+[시작]  1. 주문하기 / 2. 종료하기
+   │
+   ▼
+[섹션 선택] ──────────────────────────┐  오른쪽에 현재 주문 내역 + 합계 표시
+  1. 메뉴            6. 빵 굽기 유무   │
+  2. 빵 길이 선택     7. 야채 선택      │
+  3. 빵 종류 선택     8. 소스 선택      │
+  4. 치즈 종류 선택   9. 세트 유무      │
+  5. 재료 추가       [선택 완료]       │──▶ 주문 내역 출력, "주문이 완료되었습니다"
+                     [수정 하기]       │──▶ 주문 항목 골라 삭제
+   │                                  │
+   ▼                                  │
+[항목 선택] 메뉴 이름 · 가격 / [뒤로가기] ┘  Enter → 주문에 추가 후 섹션 선택으로
+```
 
-- **사용자 인터페이스**
-  - 방향키 기반 메뉴 선택
-  - 선택 항목 하이라이트
-  - 직관적인 화면 레이아웃
+- ↑/↓ 방향키로 이동, Enter로 선택. 선택 중인 줄은 흰 배경·검은 글자로 강조합니다.
+- 화면을 `system("cls")`로 지우고 `gotoxy()`로 좌표를 지정해 메뉴와 주문 내역을 나란히 출력합니다.
 
-## 기술 스택
-
-### 언어 및 라이브러리
-- **C (C11 표준)**
-- **Windows API** (Console 제어)
-- **conio.h** (키보드 입력)
-
-### 자료구조
+## 자료구조
 
 ```c
-// 메뉴 항목 (연결 리스트)
 typedef struct MenuItem {
-    int code;                    // 메뉴 코드
-    char name[100];              // 메뉴 이름
-    int price;                   // 가격
-    struct MenuItem* next;       // 다음 항목
+    int code;                    // 메뉴 코드 (101, 201 ...)
+    char name[MAX_LINE_LENGTH];  // 메뉴 이름
+    int price;                   // 가격 (없으면 0)
+    struct MenuItem* next;
 } MenuItem;
 
-// 주문 항목 (연결 리스트)
 typedef struct Order {
-    MenuItem* menuItem;          // 선택한 메뉴
-    struct Order* next;          // 다음 주문
+    MenuItem* menuItem;          // 메뉴 노드를 복사하지 않고 가리킴
+    struct Order* next;
 } Order;
+
+MenuItem* sections[10];          // 섹션(카테고리)마다 연결 리스트 머리를 저장하는 포인터 배열
 ```
+
+- **메뉴**: 섹션별 연결 리스트. `addMenuItem()`이 메뉴 코드 순서가 유지되는 자리에 노드를 끼워 넣습니다.
+- **주문**: `addOrderItem()`은 리스트 끝에 추가하고, `removeOrderItem()`은 선택한 항목을 찾아 앞뒤를 이은 뒤 `free()`합니다.
+- 데이터 개수를 미리 알 수 없고 추가·삭제가 잦아 배열 대신 연결 리스트를 썼습니다.
+- 종료 시 메뉴 리스트(`freeMenuItems`)와 주문 리스트(`freeOrders`)를 모두 해제합니다.
+
+## 가격 계산
+
+`calculateTotalPrice()`는 주문 리스트를 돌며 가격을 더합니다. 주문에 **30cm**가 있으면 `1. 메뉴` 섹션의 샌드위치 가격을 **한 번만 2배**로 계산합니다.
+
+## 데이터 파일 ([`Subwaydata.txt`](Subwaydata.txt))
+
+```
+1. 메뉴
+101	에그슬라이스	5200원
+102	이탈리안 비엠티	6700원
+...
+2. 빵 길이 선택
+201	15cm
+202	30cm
+...
+8. 소스 선택 (최대 3개)
+802	랜치	70원
+```
+- `N. 섹션명` 줄을 만나면 섹션을 바꾸고, 그 아래 `코드<탭>이름<탭>가격원` 줄을 `sscanf`로 읽습니다. 가격이 없는 줄은 0원으로 처리합니다.
+- 섹션 9개, 메뉴 항목 약 70개 (메뉴 18 · 빵 6 · 치즈 4 · 추가 재료 8 · 야채 9 · 소스 16 · 세트 3 등)
+
+## 빌드 및 실행 (Windows)
+
+1. Visual Studio에서 빈 C++ 콘솔 프로젝트를 만들고 `오픈소스 기말 프로젝트.c`를 추가합니다.
+2. `Subwaydata.txt`를 실행 파일이 도는 폴더(프로젝트 폴더)에 둡니다.
+3. **인코딩 맞추기**: `Subwaydata.txt`는 EUC-KR(CP949)이고, 현재 소스 파일은 UTF-8입니다. 섹션 제목을 문자열로 찾기 때문에 둘의 인코딩이 다르면 메뉴가 비어 나옵니다.
+   Visual Studio에서 소스를 열고 *파일 → 다른 이름으로 저장 → 인코딩하여 저장 → 한국어(코드 페이지 949)*로 저장한 뒤 빌드하세요.
+4. `Ctrl + F5`로 실행합니다.
 
 ## 파일 구조
 
 ```
 Subway-kiosk/
-├── 오픈소스 기말 프로젝트.c   # 메인 소스 코드 (527줄)
-├── Subwaydata.txt            # 메뉴 데이터
+├── 오픈소스 기말 프로젝트.c   # 전체 소스 (약 530줄)
+├── Subwaydata.txt            # 메뉴 데이터 (EUC-KR)
 └── README.md
-```
-
-## 핵심 기능 구현
-
-### 1. 연결 리스트 (Linked List)
-
-```c
-// 메뉴 추가 (정렬된 삽입)
-MenuItem* addMenuItem(MenuItem* head, int code, 
-                      const char* name, int price) {
-    MenuItem* newItem = (MenuItem*)malloc(sizeof(MenuItem));
-    newItem->code = code;
-    strcpy(newItem->name, name);
-    newItem->price = price;
-    newItem->next = NULL;
-    
-    // 정렬된 위치에 삽입
-    if (head == NULL || head->code > code) {
-        newItem->next = head;
-        return newItem;
-    }
-    
-    MenuItem* current = head;
-    while (current->next && current->next->code < code) {
-        current = current->next;
-    }
-    newItem->next = current->next;
-    current->next = newItem;
-    
-    return head;
-}
-```
-
-### 2. 주문 시스템
-
-```c
-// 주문 추가
-void addOrder(Order** headOrder, MenuItem* menuItem) {
-    Order* newOrder = (Order*)malloc(sizeof(Order));
-    newOrder->menuItem = menuItem;
-    newOrder->next = *headOrder;
-    *headOrder = newOrder;
-}
-
-// 총 금액 계산
-int calculateTotalPrice(Order* order, int section) {
-    int total = 0;
-    while (order) {
-        total += order->menuItem->price;
-        order = order->next;
-    }
-    return total;
-}
-```
-
-### 3. 콘솔 UI
-
-```c
-// 텍스트 선택 하이라이트
-void Text_select(const char* text, bool selected, int x, int y) {
-    gotoxy(x, y);
-    if (selected) {
-        // 흰색 배경 + 검은색 글자
-        SetConsoleTextAttribute(
-            GetStdHandle(STD_OUTPUT_HANDLE),
-            (WHITE << 4) + BLACK
-        );
-    }
-    printf("%s", text);
-    if (selected) {
-        // 원래대로 복구
-        SetConsoleTextAttribute(
-            GetStdHandle(STD_OUTPUT_HANDLE),
-            (BLACK << 4) + WHITE
-        );
-    }
-}
-```
-
-## 빌드 및 실행
-
-### Visual Studio
-
-```cmd
-1. Visual Studio 실행
-2. 새 프로젝트 → C++ 콘솔 앱
-3. "오픈소스 기말 프로젝트.c" 추가
-4. Subwaydata.txt를 프로젝트 폴더에 복사
-5. 빌드 및 실행 (F5)
-```
-
-### 명령줄 컴파일
-
-```cmd
-# MSVC
-cl "오픈소스 기말 프로젝트.c"
-
-# 실행
-"오픈소스 기말 프로젝트.exe"
-```
-
-## 사용 방법
-
-### 1. 프로그램 시작
-
-```
-서브웨이 키오스크
-> 1. 주문하기
-  2. 종료하기
-```
-
-### 2. 메뉴 선택
-
-- **방향키 (↑/↓)**: 메뉴 항목 이동
-- **Enter**: 선택
-- **메뉴 구성**:
-  1. 빵 선택
-  2. 메인 재료 선택
-  3. 치즈 선택
-  4. 야채 선택
-  5. 소스 선택
-  6. 사이드 메뉴
-
-### 3. 주문 확인
-
-- 선택한 메뉴 목록 표시
-- 각 항목의 코드 및 가격
-- 총 금액 자동 계산
-
-### 4. 주문 수정
-
-- 메뉴 추가
-- 메뉴 삭제
-- 주문 완료
-
-## 데이터 형식
-
-### Subwaydata.txt
-
-```
-메뉴코드,메뉴이름,가격
-101,허니오트,4500
-102,화이트,4500
-201,에그마요,5500
-202,참치,6000
-...
 ```
 
 ## 주요 함수
 
-| 함수명 | 설명 |
-|--------|------|
-| `addMenuItem()` | 메뉴 항목 추가 (정렬) |
-| `addOrder()` | 주문에 메뉴 추가 |
-| `calculateTotalPrice()` | 총 금액 계산 |
-| `showMenu()` | 메뉴 화면 표시 |
-| `showEntrance()` | 시작 화면 |
-| `Text_select()` | 선택 하이라이트 |
-| `gotoxy()` | 커서 위치 이동 |
+| 함수 | 역할 |
+|---|---|
+| `loadMenu()` | 데이터 파일을 읽어 섹션별 연결 리스트 생성 |
+| `addMenuItem()` | 메뉴 코드 순서대로 노드 삽입 |
+| `addOrderItem()` / `removeOrderItem()` | 주문 리스트 끝에 추가 / 선택 항목 삭제 |
+| `calculateTotalPrice()` | 합계 계산 (30cm 선택 시 메인 메뉴 2배) |
+| `printOrder()` | 화면 오른쪽에 주문 내역과 합계 출력 |
+| `showEntrance()` · `showMenu()` · `showModifyMenu()` | 시작 · 섹션/항목 선택 · 주문 수정 화면 |
+| `input_key()` · `gotoxy()` · `Text_select()` | 방향키 입력, 커서 이동, 선택 줄 강조 |
 
-## 학습 내용
+## 배운 점
+- 구조체로 메뉴와 주문 데이터를 나누고, 주문은 메뉴 노드를 **가리키기만** 해서 데이터를 중복 저장하지 않는 구조
+- 포인터 배열로 큰 카테고리(섹션)를 나누고 각 섹션을 연결 리스트로 관리하는 2단 구조
+- 크기를 알 수 없는 데이터를 필요한 만큼 할당하고 반납하는 동적 메모리 관리
 
-### 1. 자료구조
-- **연결 리스트 (Linked List)**
-  - 동적 메모리 할당
-  - 노드 삽입/삭제
-  - 정렬된 삽입
-- **포인터 체이닝**
-  - 이중 포인터 활용
-  - 메모리 관리
+## 개선할 점
+- 야채(최대 8개)·소스(최대 3개) 개수 제한은 제목에만 있고 코드로 막지는 않습니다.
+- 화면 전환을 재귀 호출(`showMenu` → `showMenu`)로 처리해 오래 쓰면 호출 스택이 쌓입니다. 반복문 기반 상태 전환으로 바꾸는 것이 좋습니다.
 
-### 2. 시스템 프로그래밍
-- **Windows Console API**
-  - 커서 제어
-  - 색상 제어
-  - 화면 지우기
-- **파일 I/O**
-  - CSV 파싱
-  - 데이터 로드
+---
 
-### 3. UI/UX 설계
-- **키보드 인터페이스**
-  - 방향키 처리
-  - 이벤트 루프
-- **시각적 피드백**
-  - 선택 하이라이트
-  - 메뉴 구조화
-
-## 기술적 특징
-
-### 동적 메모리 관리
-
-```c
-// 메뉴 리스트 생성
-MenuItem* menu = NULL;
-menu = addMenuItem(menu, 101, "허니오트", 4500);
-
-// 주문 리스트 관리
-Order* order = NULL;
-addOrder(&order, selectedMenu);
-
-// 메모리 해제
-freeOrders(order);
-```
-
-### 정렬된 삽입 알고리즘
-
-메뉴 코드 순서대로 자동 정렬하여 삽입
-
-### 계층적 메뉴 시스템
-
-섹션별로 메뉴를 분류하여 관리
-
-## 개선 가능 사항
-
-- [ ] 메뉴 수량 선택 기능
-- [ ] 할인/쿠폰 시스템
-- [ ] 영수증 출력
-- [ ] 다국어 지원
-- [ ] GUI 버전 개발
-
-## 프로젝트 의의
-
-실제 서비스의 키오스크 시스템을 모방하여:
-- 자료구조의 실용적 활용 학습
-- 사용자 인터페이스 설계 경험
-- 완성도 있는 프로그램 개발 경험
-
-## 라이선스
-
-Educational Project - 오픈소스 소프트웨어 기말 프로젝트
-
-## 작성자
-
-이승준
+### 관련 저장소
+- [rental_Car](https://github.com/bananabus6907/rental_Car) — 같은 과목의 콘솔 렌터카 예약 시스템 "우왕카"
